@@ -29,7 +29,7 @@ Results is a formatted json in the following format:
 			},
 		},
 		'packages': [
-			{ 'name': name,
+			{	'name': name,
 				'dist': dist,
 				'upstream_version': VERS,
 				'revision': REV,
