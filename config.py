@@ -1,5 +1,5 @@
 import os
-REDHAT_CVRF_COUNT = os.environ.get('REDHAT_CVE_COUNT', 2000)
+REDHAT_CVRF_COUNT = os.environ.get('REDHAT_CVRF_COUNT', 2000)
 REDHAT_ADV_URI = 'https://access.redhat.com/labs/securitydataapi/cvrf.json?per_page='+str(REDHAT_CVRF_COUNT)
 
 UBUNTU_ADV_URI = 'https://usn.ubuntu.com/usn-db/database.pickle.bz2'
