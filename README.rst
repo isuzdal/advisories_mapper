@@ -11,7 +11,7 @@ Script will gather available USN and RHSA/RHBA
 advisories for packages which listed in gerrit.
 
 Results is a formatted json in the following format:
-===
+
 ::
 
 	{
