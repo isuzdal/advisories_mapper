@@ -7,22 +7,20 @@ import re
 
 
 class Advisories(object):
-    def __init__(self):
+    def __init__(self, dist_type, config):
         self.advisories = list()
         self.advinfo = dict()
         self.pkgbase = dict()
         self.cvebase = dict()
+        self.uri = config[dist_type]['adv_uri']
+        self.dists = config[dist_type]['dists']
+        self.bugurl = config[dist_type]['bug_url_tmpl']
+        self.cveurl = config[dist_type]['cve_url_tmpl']
+        self.advurl = config[dist_type]['adv_url_tmpl']
+        self.project_map = config['gerrit']['projects_mapping']
 
 
 class UbuntuAdvisories(Advisories):
-    def __init__(self, config):
-        self.uri = config['UBUNTU_ADV_URI']
-        self.dists = config['UBUNTU_DISTRS']
-        self.bugurl = config['LP_BUG_URL']
-        self.cveurl = config['UBUNTU_CVE_URL_TEMPLATE']
-        self.advurl = config['UBUNTU_USN_URL_TEMPLATE']
-        self.project_map = config['GERRIT_PROJECTS_MAPPING']
-        super(UbuntuAdvisories, self).__init__()
 
     def refresh(self):
         archive = bz2.decompress(urllib2.urlopen(self.uri).read())
@@ -93,13 +91,6 @@ class UbuntuAdvisories(Advisories):
 
 
 class RedhatAdvisories(Advisories):
-    def __init__(self, config):
-        self.uri = config['REDHAT_ADV_URI']
-        self.dists = config['REDHAT_DISTRS']
-        self.cveurl = config['REDHAT_CVE_URL_TEMPLATE']
-        self.advurl = config['REDHAT_ADV_URL_TEMPLATE']
-        self.project_map = config['GERRIT_PROJECTS_MAPPING']
-        super(RedhatAdvisories, self).__init__()
 
     def refresh(self):
         self.advisories = json.loads(urllib2.urlopen(self.uri).read())
@@ -120,6 +111,11 @@ class RedhatAdvisories(Advisories):
         _adv['cves'] = dict()
         _adv['packages'] = list()
         _adv['url'] = self.advurl.format(adventry['RHSA'])
+
+        if len(adventry['bugzillas']) > 0:
+            _adv['known_bugs'] = [
+                self.bugurl.format(bug) for bug in adventry['bugzillas']
+            ]
 
         for cid in adventry['CVEs']:
             _adv['cves'][cid] = dict()

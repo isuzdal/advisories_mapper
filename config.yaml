@@ -1,0 +1,38 @@
+redhat:
+  adv_uri: 'https://access.redhat.com/labs/securitydataapi/cvrf.json?per_page=2000'
+  adv_url_tmpl: 'https://access.redhat.com/errata/{0}.html'
+  cve_url_tmpl: 'https://access.redhat.com/security/cve/{0}'
+  bug_url_tmpl: 'https://bugzilla.redhat.com/show_bug.cgi?id={0}'
+  dists:
+    - el6
+    - el7
+
+debian:
+  adv_uri: 'https://usn.ubuntu.com/usn-db/database.pickle.bz2'
+  adv_url_tmpl: 'https://www.ubuntu.com/usn/usn-{0}/'
+  cve_url_tmpl: 'https://people.canonical.com/~ubuntu-security/cve/{0}/{1}.html'
+  bug_url_tmpl: 'https://launchpad.net/bugs/'
+  dists:
+    - xenial
+    - trusty
+
+gerrit:
+  base_uri: 'https://review.fuel-infra.org/projects/'
+  projects:
+    - trusty
+    - xenial
+    - centos6
+    - centos7
+  projects_mapping:
+    xenial: xenial
+    trusty: trusty
+    el6: centos6
+    el7: centos7
+
+cve:
+  years:
+    - 2017
+    - 2016
+    - 2015
+    - 2014
+    - 2013

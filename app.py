@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import sys
 import json
-import config
+import yaml
 import lib.packages
 import lib.cveinfo
 import lib.advisories
@@ -9,20 +9,23 @@ import lib.advisories
 
 def main():
     advs = dict()
-    pkgs = lib.packages.Packages(config.CONFIG['GERRIT_BASE_URL'])
-    pkgs.gerrit_projects = config.CONFIG['GERRIT_PROJECTS']
+
+    config = yaml.safe_load(open('config.yaml', 'r').read())
+
+    pkgs = lib.packages.Packages(config['gerrit']['base_uri'])
+    pkgs.gerrit_projects = config['gerrit']['projects']
     pkgs.refresh()
 
-    cves = lib.cveinfo.CVE(config.CONFIG['CVE_YEARS'])
+    cves = lib.cveinfo.CVE(config['cve']['years'])
     cves.refresh()
 
-    ubuntu_advs = lib.advisories.UbuntuAdvisories(config.CONFIG)
+    ubuntu_advs = lib.advisories.UbuntuAdvisories('debian', config)
     ubuntu_advs.pkgbase = pkgs.packages
     ubuntu_advs.cvebase = cves.cves
     ubuntu_advs.refresh()
     ubuntu_advs.addAdvisoriesInfo()
 
-    redhat_advs = lib.advisories.RedhatAdvisories(config.CONFIG)
+    redhat_advs = lib.advisories.RedhatAdvisories('redhat', config)
     redhat_advs.pkgbase = pkgs.packages
     redhat_advs.cvebase = cves.cves
     redhat_advs.refresh()
