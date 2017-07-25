@@ -4,6 +4,9 @@ import bz2
 import json
 import urllib2
 import re
+import os
+import bzrlib.plugin
+import bzrlib.branch
 
 
 class Advisories(object):
@@ -18,6 +21,7 @@ class Advisories(object):
         self.cveurl = config[dist_type]['cve_url_tmpl']
         self.advurl = config[dist_type]['adv_url_tmpl']
         self.project_map = config['gerrit']['projects_mapping']
+        self.bzrpath = '/tmp/uct'
 
 
 class UbuntuAdvisories(Advisories):
@@ -25,6 +29,7 @@ class UbuntuAdvisories(Advisories):
     def refresh(self):
         archive = bz2.decompress(urllib2.urlopen(self.uri).read())
         self.advisories = cPickle.loads(archive)
+        self._fetchBzr()
 
     def addAdvisoriesInfo(self):
         for adv, advinfo in self.advisories.iteritems():
@@ -36,6 +41,9 @@ class UbuntuAdvisories(Advisories):
     def _parseAdvEntry(self, advinfo):
         _adv = dict()
         _adv['cves'] = dict()
+        _bugs = list()
+        bzrdir = os.path.join(self.bzrpath, 'active')
+
         for cid in advinfo['cves']:
             if self.bugurl in cid:
                 cid = 'BUG-' + str(cid.split('/')[-1])
@@ -56,6 +64,12 @@ class UbuntuAdvisories(Advisories):
                 _adv['cves'][cid]['commits'] = [
                     l for l in self.cvebase[cid]['references'] if 'commit' in l
                 ]
+
+            if os.path.isfile(os.path.join(bzrdir, cid)):
+                bugs = self._parseUbuntuCVE(os.path.join(bzrdir, cid))
+                if len(bugs) > 0:
+                    _bugs += bugs
+                
         _adv['packages'] = list()
         for dist in self.dists:
             if dist in advinfo['releases']:
@@ -73,6 +87,7 @@ class UbuntuAdvisories(Advisories):
                             'dist': dist,
                         }))
         _adv['url'] = self.advurl.format(advinfo['id'])
+        _adv['known_bugs'] = _bugs
         return _adv if len(_adv['packages']) > 0 else None
 
     def _parseVersion(self, version):
@@ -88,6 +103,36 @@ class UbuntuAdvisories(Advisories):
             return (epoch, upstream_version, revision, version)
         except:
             return (None, None, None, version)
+
+    def _parseUbuntuCVE(self, path):
+        bugs = list()
+        found = False
+        idx = 0
+        f = open(path).readlines()
+        while idx < len(f):
+            l = f[idx]
+            if l == 'Bugs:\n':
+                found = True
+            elif found:
+                if l.startswith(' '):
+                    bugs.append(l.strip())
+                else:
+                    break
+            idx += 1
+        return bugs
+
+    def _fetchBzr(self):
+        bzrlib.plugin.load_plugins()
+        if not os.path.exists(self.bzrpath):
+            os.makedirs(self.bzrpath, mode=0755)
+            rb = bzrlib.branch.Branch.open('lp:ubuntu-cve-tracker')
+            local_branch = rb.bzrdir.sprout(self.bzrpath).open_branch()
+        elif not os.path.isdir(self.bzrpath):
+            raise NotADirectoryError
+        else:
+            rb = bzrlib.branch.Branch.open(self.bzrpath)
+            rb.update()
+        return True
 
 
 class RedhatAdvisories(Advisories):
