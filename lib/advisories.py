@@ -157,10 +157,9 @@ class RedhatAdvisories(Advisories):
         _adv['packages'] = list()
         _adv['url'] = self.advurl.format(adventry['RHSA'])
 
-        if len(adventry['bugzillas']) > 0:
-            _adv['known_bugs'] = [
-                self.bugurl.format(bug) for bug in adventry['bugzillas']
-            ]
+        _adv['known_bugs'] = [
+            self.bugurl.format(bug) for bug in adventry['bugzillas']
+        ]
 
         for cid in adventry['CVEs']:
             _adv['cves'][cid] = dict()
