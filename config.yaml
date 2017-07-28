@@ -36,3 +36,7 @@ cve:
     - 2015
     - 2014
     - 2013
+
+bzr:
+  path: /tmp/uct
+  branch: 'lp:ubuntu-cve-tracker'

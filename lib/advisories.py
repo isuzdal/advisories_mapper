@@ -21,7 +21,8 @@ class Advisories(object):
         self.cveurl = config[dist_type]['cve_url_tmpl']
         self.advurl = config[dist_type]['adv_url_tmpl']
         self.project_map = config['gerrit']['projects_mapping']
-        self.bzrpath = '/tmp/uct'
+        self.bzrpath = config['bzr']['path']
+        self.bzrbranch = config['bzr']['branch']
 
 
 class UbuntuAdvisories(Advisories):
@@ -125,7 +126,7 @@ class UbuntuAdvisories(Advisories):
         bzrlib.plugin.load_plugins()
         if not os.path.exists(self.bzrpath):
             os.makedirs(self.bzrpath, mode=0755)
-            rb = bzrlib.branch.Branch.open('lp:ubuntu-cve-tracker')
+            rb = bzrlib.branch.Branch.open(self.bzrbranch)
             local_branch = rb.bzrdir.sprout(self.bzrpath).open_branch()
         elif not os.path.isdir(self.bzrpath):
             raise NotADirectoryError
