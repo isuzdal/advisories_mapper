@@ -1,5 +1,5 @@
-import urllib2
 from xml.dom import minidom
+from .utils import fetch_content
 
 
 class CVE(object):
@@ -11,7 +11,7 @@ class CVE(object):
                         'allitems-cvrf-year-{0}.xml'
 
     def _fetchData(self, year):
-        self.xmldata = urllib2.urlopen(self.uri_tmpl.format(year)).read()
+        self.xmldata = fetch_content(self.uri_tmpl.format(year))
 
     def _parseAndUpdate(self):
         xmldata = minidom.parseString(self.xmldata)

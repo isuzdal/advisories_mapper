@@ -1,12 +1,11 @@
-import urllib2
 import cPickle
 import bz2
 import json
-import urllib2
 import re
 import os
 import bzrlib.plugin
 import bzrlib.branch
+from .utils import fetch_content
 
 
 class Advisories(object):
@@ -28,7 +27,7 @@ class Advisories(object):
 class UbuntuAdvisories(Advisories):
 
     def refresh(self):
-        archive = bz2.decompress(urllib2.urlopen(self.uri).read())
+        archive = bz2.decompress(fetch_content(self.uri))
         self.advisories = cPickle.loads(archive)
         self._fetchBzr()
 
@@ -139,7 +138,7 @@ class UbuntuAdvisories(Advisories):
 class RedhatAdvisories(Advisories):
 
     def refresh(self):
-        self.advisories = json.loads(urllib2.urlopen(self.uri).read())
+        self.advisories = json.loads(fetch_content(self.uri))
 
     def addAdvisoriesInfo(self):
         for adventry in self.advisories:

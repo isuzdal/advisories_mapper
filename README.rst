@@ -15,28 +15,39 @@ Results is a formatted json in the following format:
 ::
 
 	{
-	'aid': {
-		'cves': {
-			'cid': {
-				'url': 'http://vendor/specific/cve/url',
-				'subject': 'CVE Subject from mitre.org',
-				'references': [
-					'http://link/from/mitre/references'
-				],
-				'commits': [
-					'http://link/from/mitre/references/if/commit/in/url'
-				],
+	'resolved': {
+		'aid': {
+			'cves': {
+				'cid': {
+					'url': 'http://vendor/specific/cve/url',
+					'subject': 'CVE Subject from mitre.org',
+					'references': [
+						'http://link/from/mitre/references'
+					],
+					'commits': [
+						'http://link/from/mitre/references/if/commit/in/url'
+					],
+				},
 			},
-		},
-		'packages': [
-			{	'name': name,
-				'dist': dist,
-				'upstream_version': VERS,
-				'revision': REV,
-				'full_version': VERS
+			'packages': [
+				{	'name': name,
+					'dist': dist,
+					'upstream_version': VERS,
+					'revision': REV,
+					'full_version': VERS
+				}
+			],
+			'url': 'http://vendor/specific/advisory/url'
+		}
+	},
+	'active': {
+		'cid': {
+			'dist': {
+				'src_pkg_name': {
+					'bug_id': bug_url
+				}
 			}
-		],
-		'url': 'http://vendor/specific/advisory/url'
+		}
 	}
 	}
 ..
