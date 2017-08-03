@@ -3,7 +3,7 @@ Usage
 
 ::
 
-	python app.py [results.json]
+	python app.py [-u] -o /path/to/output.json -c /path/to/config.yaml
 
 ..
 
