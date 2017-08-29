@@ -4,17 +4,20 @@ from .utils import fetch_content
 
 class OpenIssues(object):
 
-    def __init__(self):
+    def __init__(self,config):
         self.cves = list()
         self.results = dict()
-        self.dists = ['trusty', 'xenial', 'yakkety'] #list()
+        self.uri = config.get('cve_uri_template', str())
+        self.dists = config.get('dists', list())
+        self.mapping = config.get('mapping', dict())
+
+class UbOpenIssues(OpenIssues):
 
     def refresh(self):
         for cve in sorted(self.cves):
-            content = fetch_content(
-                'https://api.launchpad.net/devel/bugs/cve/{0}'.format(
-                '-'.join(cve.split('-')[1:]))
-            )
+            content = fetch_content(self.uri.format(
+                        '-'.join(cve.split('-')[1:])))
+
             a = json.loads(content) if len(content) > 0 else dict()
 
             body = fetch_content(a.get('bugs_collection_link', str()),tmout=20)
@@ -45,3 +48,46 @@ class OpenIssues(object):
                             if pkg_src_name not in self.results[cve][dist]:
                                 self.results[cve][dist][pkg_src_name] = dict()
                             self.results[cve][dist][pkg_src_name][bug_id] = url
+
+
+class RhOpenIssues(OpenIssues):
+
+    def _mapping(self, cpe):
+        if cpe == str():
+            return None
+        _cpe = cpe.split('/')[1].split(':')[1:]
+        if len(_cpe) == 3:
+            vendor, family, version = _cpe
+        elif len(_cpe) == 5:
+            vendor, family, version, _, dist = _cpe
+        if family in self.mapping:
+            return self.mapping.get(family, dict()).get(version, None)
+        return None
+
+    def refresh(self):
+        for cve in self.cves:
+            body = fetch_content(self.uri.format(cve))
+            if len(body) > 0:
+                data = json.loads(body)
+                #if data.get('threat_severity', 'low').lower() == 'low':
+                #    continue
+                cpes = data.get('package_state', list())
+                if isinstance(cpes, dict):
+                    cpes = [cpes]
+                for cpe in cpes:
+                    _cpe = self._mapping(cpe.get('cpe', str()))
+                    if _cpe in self.dists:
+                        if cpe['fix_state'] == 'Will not fix':
+                            continue
+                        if cpe['fix_state'] == 'Not affected':
+                            continue
+                        if cve not in self.results:
+                            self.results[cve] = dict()
+                            self.results[cve]['packages'] = dict()
+                        if _cpe not in self.results[cve]:
+                            self.results[cve]['packages'][_cpe] = dict()
+                        self.results[cve]['packages'][_cpe]\
+                                    [cpe['package_name']]= cpe['fix_state']
+                if cve in self.results:
+                    self.results[cve]['url'] = data.get('bugzilla', dict()
+                                                    ).get('url', str())

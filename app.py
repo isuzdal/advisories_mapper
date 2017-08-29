@@ -15,11 +15,17 @@ def main():
                         default='config.yaml', dest='config',
                         action='store', help='%(prog)s config path')
     parser.add_argument('-o', '--output', default='STDOUT',
-                        dest='output', action='store', help='output, can be STDOUT or path to file')
-    parser.add_argument('-u', '--unresolved',
-                        action='store_true', dest='unresolved',
-                        help='Collect all bugs which referenced to CVEs and still are open. ' \
-                        'Attention, it takes a LOT of time!')
+                        dest='output', action='store',
+                        help='output, can be STDOUT or path to file')
+    parser.add_argument('-u', '--ubuntu',
+                        action='store_true', dest='ubuntu',
+                        help='Collect all bugs which referenced to CVEs and ' \
+                        'still are open. Attention, it takes a LOT of time!')
+    parser.add_argument('-r', '--redhat',
+                        action='store_true', dest='redhat',
+                        help='Collect all packages with does not have RHA but '\
+                        'have assigned CVE. Attention, it takes a LOT of time!')
+
     args = parser.parse_args()
 
     advs = dict({'resolved': dict(), 'active': dict()})
@@ -55,12 +61,17 @@ def main():
                 x.append(pkg)
         advs['resolved'][adv]['packages'] = x
 
-    if args.unresolved:
-        issues = lib.openissues.OpenIssues()
+    if args.ubuntu:
+        issues = lib.openissues.UbOpenIssues(config['debian']['open_issues'])
         issues.cves = cves.cves
-        issues.dists = config['debian']['dists']
         issues.refresh()
-        advs['active'] = issues.results
+        advs['active']['ubuntu'] = issues.results
+
+    if args.redhat:
+        issues = lib.openissues.RhOpenIssues(config['redhat']['open_issues'])
+        issues.cves = set(cves.cves.keys()) | set(redhat_advs.advinfo.keys())
+        issues.refresh()
+        advs['active']['redhat'] = issues.results
 
     res = json.dumps(advs, indent=2)
 

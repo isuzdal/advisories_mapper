@@ -1,20 +1,40 @@
 redhat:
-  adv_uri: 'https://access.redhat.com/labs/securitydataapi/cvrf.json?per_page=2000'
+  adv_uri: 'https://access.redhat.com/labs/securitydataapi/cvrf.json?per_page=10000'
   adv_url_tmpl: 'https://access.redhat.com/errata/{0}.html'
   cve_url_tmpl: 'https://access.redhat.com/security/cve/{0}'
   bug_url_tmpl: 'https://bugzilla.redhat.com/show_bug.cgi?id={0}'
   dists:
     - el6
     - el7
+  open_issues:
+    cve_uri_template: 'https://access.redhat.com/labs/securitydataapi/cve/{0}.json'
+    mapping:
+      openstack:
+        '8': liberty
+        '9': mitaka
+        '10': newton
+        '11': ocata
+      enterprise_linux:
+        '7': el7
+        '6': el6
+    dists:
+      - mitaka
+      - newton
+      - ocata
+      - el6
+      - el7
 
 debian:
   adv_uri: 'https://usn.ubuntu.com/usn-db/database.pickle.bz2'
   adv_url_tmpl: 'https://www.ubuntu.com/usn/usn-{0}/'
   cve_url_tmpl: 'https://people.canonical.com/~ubuntu-security/cve/{0}/{1}.html'
   bug_url_tmpl: 'https://launchpad.net/bugs/'
-  dists:
+  dists: &debian_dists
     - xenial
     - trusty
+  open_issues:
+    cve_uri_template: 'https://api.launchpad.net/devel/bugs/cve/{0}'
+    dists: *debian_dists
 
 gerrit:
   base_uri: 'https://review.fuel-infra.org/projects/'
