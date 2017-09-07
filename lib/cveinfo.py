@@ -1,6 +1,8 @@
-from xml.dom import minidom
 from .utils import fetch_content
+import json
 import multiprocessing.dummy
+import os
+import zlib
 
 
 class CVE(object):
