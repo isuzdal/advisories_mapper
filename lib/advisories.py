@@ -1,10 +1,12 @@
-import cPickle
 import bz2
-import json
-import re
-import os
-import bzrlib.plugin
 import bzrlib.branch
+import bzrlib.plugin
+import cPickle
+import datetime
+import json
+import os
+import re
+import time
 from .utils import fetch_content
 
 
@@ -88,6 +90,7 @@ class UbuntuAdvisories(Advisories):
                         }))
         _adv['url'] = self.advurl.format(advinfo['id'])
         _adv['known_bugs'] = _bugs
+        _adv['timestamp'] = advinfo.get('timestamp', None)
         return _adv if len(_adv['packages']) > 0 else None
 
     def _parseVersion(self, version):
@@ -156,6 +159,7 @@ class RedhatAdvisories(Advisories):
         _adv['cves'] = dict()
         _adv['packages'] = list()
         _adv['url'] = self.advurl.format(adventry['RHSA'])
+        _adv['timestamp'] = None
 
         _adv['known_bugs'] = [
             self.bugurl.format(bug) for bug in adventry['bugzillas']
@@ -190,6 +194,14 @@ class RedhatAdvisories(Advisories):
                             'full_version': full_version,
                             'dist': dist
                         }))
+        ts_str = adventry.get('released_on', None)
+        if ts_str:
+            dt_str, offset_str = (ts_str.split('+') + ['00:00', ])[:2]
+            offset = offset_str.split(':')
+            ts = datetime.datetime.strptime(dt_str, '%Y-%m-%dT%H:%M:%S')\
+                 + datetime.timedelta(hours=int(offset[0]),
+                                      minutes=int(offset[1]))
+            _adv['timestamp'] = time.mktime(ts.timetuple())
         return _adv if len(_adv['packages']) > 0 else None
 
     def _parseVersion(self, pkg):
