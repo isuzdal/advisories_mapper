@@ -1,5 +1,6 @@
 from xml.dom import minidom
 from .utils import fetch_content
+import multiprocessing.dummy
 
 
 class CVE(object):
@@ -7,37 +8,31 @@ class CVE(object):
         self.years = list(years)
         self.cves = dict()
         self.xmldata = str()
-        self.uri_tmpl = 'http://cve.mitre.org/data/downloads/' + \
-                        'allitems-cvrf-year-{0}.xml'
+        self.uri_tmpl = 'https://static.nvd.nist.gov/feeds/json/cve' + \
+                        '/1.0/nvdcve-1.0-{0}.json.gz'
 
-    def _fetchData(self, year):
-        self.xmldata = fetch_content(self.uri_tmpl.format(year))
+    def _fetchAndProcess(self, year):
+        content = fetch_content(self.uri_tmpl.format(year))
+        if not len(content) == 0:
+            content = json.loads(zlib.decompress(content, zlib.MAX_WBITS|32))
+            self._process(content['CVE_Items'])
+        return True
 
-    def _parseAndUpdate(self):
-        xmldata = minidom.parseString(self.xmldata)
-        vulnerabilities = xmldata.getElementsByTagName('Vulnerability')
-        for vuln in vulnerabilities:
-            reflist = list()
-            subj = str()
-            if vuln.getElementsByTagName('CVE')[0].hasChildNodes():
-                cid = vuln.getElementsByTagName('CVE')[0].firstChild.data
-                for refs in vuln.getElementsByTagName('References'):
-                    for ref in refs.getElementsByTagName('Reference'):
-                        for url in ref.getElementsByTagName('URL'):
-                            if url.hasChildNodes():
-                                reflist.append(str(url.firstChild.data))
-                note = vuln.getElementsByTagName('Notes')[0]
-                if note.getElementsByTagName('Note')[0].hasChildNodes():
-                    subj = note.getElementsByTagName('Note')[0].firstChild.data
-                if cid not in self.cves:
-                    self.cves[cid] = dict()
-                    self.cves[cid]['references'] = list()
-                    self.cves[cid]['subject'] = str()
-                self.cves[cid]['references'] = reflist
-                self.cves[cid]['subject'] = subj
+    def _process(self, cves):
+        for cve in cves:
+            cid = cve['cve']['CVE_data_meta']['ID']
+            desc = cve['cve']['description']['description_data'][0]['value']
+            refs = cve['cve'].get('references', {}).get('reference_data', list())
+            self.cves[cid] = dict()
+            self.cves[cid]['subject'] = desc
+            self.cves[cid]['references'] = [str(i['url']) for i in refs]
+        return True
 
     def refresh(self):
-        for year in self.years:
-            self._fetchData(year)
-            self._parseAndUpdate()
+        THR_COUNT = len(self.years)
+        pool = multiprocessing.dummy.Pool(THR_COUNT)
+        pool.map_async(self._fetchAndProcess, self.years)
+        pool.close()
+        pool.join()
+        pool.terminate()
 
