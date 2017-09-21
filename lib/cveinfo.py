@@ -24,7 +24,8 @@ class CVE(object):
         for cve in cves:
             cid = cve['cve']['CVE_data_meta']['ID']
             desc = cve['cve']['description']['description_data'][0]['value']
-            refs = cve['cve'].get('references', {}).get('reference_data', list())
+            refs = cve['cve'].get('references', dict()
+                            ).get('reference_data', list())
             self.cves[cid] = dict()
             self.cves[cid]['subject'] = desc
             self.cves[cid]['references'] = [str(i['url']) for i in refs]

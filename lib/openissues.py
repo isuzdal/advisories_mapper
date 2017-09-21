@@ -15,8 +15,9 @@ class OpenIssues(object):
         self.parallel = True
 
     def refresh(self):
+        proccount = os.sysconf('SC_NPROCESSORS_ONLN')
         if self.parallel:
-            THR_COUNT = os.sysconf('SC_NPROCESSORS_ONLN') - 2
+            THR_COUNT = proccount - 2 if proccount > 2 else proccount
             pool = multiprocessing.dummy.Pool(THR_COUNT)
             pool.map(self._process, self.cves)
             pool.close()
@@ -66,13 +67,10 @@ class UbOpenIssues(OpenIssues):
 class RhOpenIssues(OpenIssues):
 
     def _mapping(self, cpe):
-        if cpe == str():
+        if len(cpe) == 0:
             return None
         _cpe = cpe.split('/')[1].split(':')[1:]
-        if len(_cpe) == 3:
-            vendor, family, version = _cpe
-        elif len(_cpe) == 5:
-            vendor, family, version, _, dist = _cpe
+        vendor, family, version = _cpe[0:3]
         if family in self.mapping:
             return self.mapping.get(family, dict()).get(version, None)
         return None

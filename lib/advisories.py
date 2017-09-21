@@ -129,7 +129,7 @@ class UbuntuAdvisories(Advisories):
         if not os.path.exists(self.bzrpath):
             os.makedirs(self.bzrpath, mode=0755)
             rb = bzrlib.branch.Branch.open(self.bzrbranch)
-            local_branch = rb.bzrdir.sprout(self.bzrpath).open_branch()
+            rb.bzrdir.sprout(self.bzrpath).open_branch()
         elif not os.path.isdir(self.bzrpath):
             raise NotADirectoryError
         else:
@@ -141,7 +141,9 @@ class UbuntuAdvisories(Advisories):
 class RedhatAdvisories(Advisories):
 
     def refresh(self):
-        self.advisories = json.loads(fetch_content(self.uri))
+        content = fetch_content(self.uri)
+        if len(content) > 0:
+            self.advisories = json.loads(content)
 
     def addAdvisoriesInfo(self):
         for adventry in self.advisories:
